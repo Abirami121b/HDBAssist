@@ -1,0 +1,705 @@
+curl -s -X POST "https://cloud.flowiseai.com/api/v1/prediction/28bddf08-01dc-4472-aa7f-e6f7e2c0297f"   -H "Content-Type: application/json"   -H "Authorization: Bearer YOUR_KEY"   -d '{"question":"Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines.","sessionId":"debug-nea-1"}'   | python -m json.tool
+{
+    "text": "```json\n{\n  \"urgency_level\": \"Normal\",\n  \"recommended_authority\": \"NEA\",\n  \"recommended_authority_details\": \"Not found in sources. Use official agency channels (e.g., OneService / agency website).\",\n  \"assessment\": \"Mosquito breeding in the corridor area can lead to health risks due to bites.\",\n  \"next_steps\": [\n    \"Report the issue to the NEA.\",\n    \"Use mosquito repellent until the issue is resolved.\"\n  ],\n  \"details_to_prepare\": [\n    \"Location details (Blk 210 Tampines)\",\n    \"Description of the issue (mosquito breeding)\"\n  ],\n  \"questions_if_missing\": [\n    \"Have you observed the extent of the breeding?\",\n    \"Are there any stagnant water sources nearby?\"\n  ],\n  \"confidence\": \"medium\"\n}\n```",
+    "question": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines.",
+    "chatId": "7b2621c4-99d8-47dc-aea2-12e8284362fe",
+    "chatMessageId": "74d84a83-bd0b-474d-839d-08580f918b31",
+    "executionId": "14d2af2b-cd3d-4723-a86b-453a0c5f1a41",
+    "agentFlowExecutedData": [
+        {
+            "nodeId": "startAgentflow_0",
+            "nodeLabel": "Text Input (User Issue)",
+            "data": {
+                "id": "startAgentflow_0",
+                "name": "startAgentflow",
+                "input": {
+                    "question": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines."
+                },
+                "output": {
+                    "question": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines."
+                },
+                "state": {
+                    "chat_input": "{{input.question}}",
+                    "session_id": "{{sessionId}}",
+                    "location_ui": "{{overrideConfig.location}}",
+                    "category_ui": "{{categoryConfig.issue_category}}",
+                    "continue_flow": "true",
+                    "country": "\"\"",
+                    "location_details": "\"\"",
+                    "issue_description": "\"\"",
+                    "urgency_hint": "\"\"",
+                    "need_more_info": "false",
+                    "clarifying_question": "\"\"",
+                    "exit_reason": "\"\"",
+                    "exit_message": "\"\"",
+                    "finalize_now": "\"\"",
+                    "route": "\"\""
+                }
+            },
+            "previousNodeIds": [],
+            "status": "FINISHED"
+        },
+        {
+            "nodeId": "llmAgentflow_0",
+            "nodeLabel": "Supervisor",
+            "data": {
+                "id": "llmAgentflow_0",
+                "name": "llmAgentflow",
+                "input": {
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are the Supervisor Agent for a Singapore public service guidance application for HDB-related estate issues.\n\nYour job is to perform FIRST-INTAKE and FLOW CONTROL only.\n\nYou must NOT provide agency recommendations, contact details, phone numbers, URLs, or step-by-step instructions. That is handled by downstream RAG agents.\n\n\\========================\n\nCORE RESPONSIBILITIES\n\n\\========================\n\n1) Determine if the issue is within Singapore.\n\n\\- If the user explicitly states a non-Singapore location OR it is clearly outside Singapore:\n\nset continue_flow=false, route=\"outside_sg\", and provide a polite exit_message.\n\n\\- If the location is unclear, assume continue_flow=true but set need_more_info=true\n\nand ask one clarifying question about location in Singapore.\n\n2) Extract and normalize the issue description.\n\n\\- Rewrite the issue in 1\u20132 clear sentences, removing irrelevant text.\n\n\\- Do not invent details.\n\n3) Assess urgency (hint only).\n\n\\- Set urgency_hint to one of: \"urgent\", \"non-urgent\", \"unknown\".\n\n\\- \"urgent\" examples: fire/smoke/gas leak, violence, weapon, serious injury,\n\nimmediate danger, someone trapped (e.g., trapped in lift), active break-in.\n\n\\- If unsure, use \"unknown\".\n\n4) Decide routing for downstream agents (classification only).\n\nSet route to EXACTLY ONE of the following lowercase values:\n\n\\- \"outside_sg\"\n\n\\- \"emergency\"\n\n\\- \"police\"\n\n\\- \"town_council\"\n\n\\- \"hdb\"\n\n\\- \"nea\"\n\n\\- \"unknown\"\n\nRouting guidance:\n\n\\- outside_sg: clearly not Singapore.\n\n\\- emergency: immediate danger, fire/smoke, gas leak, serious injury, violence, weapon, someone trapped, active break-in.\n\n\\- police: theft, suspicious person/activity, harassment, threats, stalking, scam, vandalism, missing person.\n\n\\- town_council: lift, corridor, common areas, void deck, staircase, bin chute, common lighting, common-area cleanliness/repairs.\n\n\\- hdb: inside the flat/unit issues such as ceiling/wall leaks, internal fixtures, structural cracks/spalling, renovation disputes (HDB-related).\n\n\\- nea: mosquito breeding/dengue, pests (cockroaches/rats), foul smell/odour, public hygiene.\n\n\\- unknown: not enough information to decide.\n\nImportant rule:\n\n\\- If need_more_info=true, set route=\"unknown\" unless the case is clearly outside_sg or clearly emergency.\n\n5) Ask at most ONE clarifying question.\n\n\\- Only if needed to proceed (e.g., location missing, unclear facts).\n\n\\- If you ask a question: need_more_info=true and fill clarifying_question.\n\n\\- Otherwise: need_more_info=false and clarifying_question=\"\".\n\n\\========================\n\nOUTPUT RULES (STRICT)\n\n\\========================\n\n\\- Output MUST be a single JSON object only.\n\n\\- Do NOT include any additional text outside JSON.\n\n\\- Do NOT change key names.\n\n\\- Always include ALL keys listed below, even if values are empty strings.\n\n\\- For missing strings, use \"\" (empty string).\n\n\\- For unknown urgency, use \"unknown\".\n\n\\- For unknown routing, use route=\"unknown\".\n\n\\========================\n\nREQUIRED JSON OUTPUT KEYS\n\n\\========================\n\n{\n\n\"continue_flow\": boolean,\n\n\"country\": string,\n\n\"location_details\": string,\n\n\"issue_description\": string,\n\n\"urgency_hint\": string,\n\n\"route\": string,\n\n\"need_more_info\": boolean,\n\n\"clarifying_question\": string,\n\n\"exit_reason\": string,\n\n\"exit_message\": string\n\n}\n\n\\========================\n\nFIELD DEFINITIONS\n\n\\========================\n\n\\- continue_flow: true if within Singapore OR unclear; false if clearly outside Singapore/out of scope.\n\n\\- country: \"Singapore\" if within Singapore; otherwise the country stated by user if known, else \"\".\n\n\\- location_details: block/street/estate/landmark if provided; else \"\".\n\n\\- issue_description: normalized issue description in 1\u20132 sentences; else \"\" if exiting.\n\n\\- urgency_hint: \"urgent\" | \"non-urgent\" | \"unknown\".\n\n\\- route: one of: outside_sg | emergency | police | town_council | hdb | nea | unknown\n\n\\- need_more_info: true only when you must ask ONE question to proceed.\n\n\\- clarifying_question: the ONE question if need_more_info=true, else \"\".\n\n\\- exit_reason: \"outside_singapore\" or \"out_of_scope\" when continue_flow=false, else \"\".\n\n\\- exit_message: polite goodbye message when continue_flow=false, else \"\".\n\n\\========================\n\nEXIT MESSAGE TEMPLATE\n\n\\========================\n\nIf continue_flow=false, use:\n\n\"Thank you for reaching out. This application supports public service issues within Singapore only. Please look for the relevant public service authorities in your country. Goodbye.\""
+                        },
+                        {
+                            "role": "user",
+                            "content": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines."
+                        },
+                        {
+                            "role": "user",
+                            "content": "{{input.question}}"
+                        }
+                    ],
+                    "llmModel": "chatOpenAI",
+                    "llmEnableMemory": true,
+                    "llmMemoryType": "allMessages",
+                    "llmUserMessage": "{{input.question}}",
+                    "llmReturnResponseAs": "assistantMessage",
+                    "llmStructuredOutput": [
+                        {
+                            "key": "continue_flow",
+                            "type": "boolean",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "false if outside Singapore or user refuses; otherwise true. Indicates whether the agentflow should continue processing. false means stop and reply to user directly politely that the app is restricted only for Singapore users."
+                        },
+                        {
+                            "key": "country",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "\"Singapore\" or detected/declared Country"
+                        },
+                        {
+                            "key": "location_details",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Location details provided by the resident (e.g. block, street, estate, landmark)."
+                        },
+                        {
+                            "key": "issue_description",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Normalised and concise description of 1-2 sentences of the issue, rewritten clearly by the supervisor agent."
+                        },
+                        {
+                            "key": "urgency_hint",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "User-indicated urgency level such as urgent, non-urgent, or unknown. This is a hint only, not a decision."
+                        },
+                        {
+                            "key": "exit_message",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Polite message to display to the user when the flow is terminated (e.g. outside Singapore)."
+                        },
+                        {
+                            "key": "exit_reason",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Reason for terminating the flow (e.g. outside_singapore)."
+                        },
+                        {
+                            "key": "need_more_info",
+                            "type": "boolean",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Whether Supervisor still needs one key detail before routing."
+                        },
+                        {
+                            "key": "clarifying_question",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "One question if need_more_info=true, else empty."
+                        },
+                        {
+                            "key": "finalize_now",
+                            "type": "boolean",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "true or false based on the supervisor decision to send to report agent now or not"
+                        },
+                        {
+                            "key": "route",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "decide which condition to use outside_SG, Emergency, Police, Town_council, HDB, NEA"
+                        }
+                    ],
+                    "llmUpdateState": [
+                        {
+                            "key": "continue_flow",
+                            "value": "{{ output.continue_flow }}"
+                        },
+                        {
+                            "key": "country",
+                            "value": "{{ output.country }}"
+                        },
+                        {
+                            "key": "location_details",
+                            "value": "{{ output.location_details }}"
+                        },
+                        {
+                            "key": "issue_description",
+                            "value": "{{ output.issue_description }}"
+                        },
+                        {
+                            "key": "urgency_hint",
+                            "value": "{{ output.urgency_hint }}"
+                        },
+                        {
+                            "key": "exit_message",
+                            "value": "{{ output.exit_message }}"
+                        },
+                        {
+                            "key": "exit_reason",
+                            "value": "{{ output.exit_reason }}"
+                        },
+                        {
+                            "key": "need_more_info",
+                            "value": "{{ output.need_more_info }}"
+                        },
+                        {
+                            "key": "clarifying_question",
+                            "value": "{{ output.clarifying_question }}"
+                        },
+                        {
+                            "key": "finalize_now",
+                            "value": "{{ output.finalize_now }}"
+                        },
+                        {
+                            "key": "route",
+                            "value": "{{ output.route }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "cache": "",
+                        "modelName": "gpt-4o-mini",
+                        "temperature": "0.2",
+                        "streaming": true,
+                        "maxTokens": "",
+                        "topP": "",
+                        "frequencyPenalty": "",
+                        "presencePenalty": "",
+                        "timeout": "",
+                        "strictToolCalling": "",
+                        "stopSequence": "",
+                        "basepath": "",
+                        "proxyUrl": "",
+                        "baseOptions": "",
+                        "allowImageUploads": "",
+                        "imageResolution": "low",
+                        "reasoning": "",
+                        "reasoningEffort": "",
+                        "reasoningSummary": "",
+                        "llmModel": "chatOpenAI"
+                    }
+                },
+                "output": {
+                    "content": "{\n  \"continue_flow\": true,\n  \"country\": \"Singapore\",\n  \"location_details\": \"Blk 210 Tampines\",\n  \"issue_description\": \"There are mosquitoes breeding in the corridor area, causing many bites at night.\",\n  \"urgency_hint\": \"non-urgent\",\n  \"exit_message\": \"\",\n  \"exit_reason\": \"\",\n  \"need_more_info\": false,\n  \"clarifying_question\": \"\",\n  \"finalize_now\": false,\n  \"route\": \"nea\"\n}",
+                    "timeMetadata": {
+                        "start": 1772096928849,
+                        "end": 1772096932028,
+                        "delta": 3179
+                    },
+                    "continue_flow": true,
+                    "country": "Singapore",
+                    "location_details": "Blk 210 Tampines",
+                    "issue_description": "There are mosquitoes breeding in the corridor area, causing many bites at night.",
+                    "urgency_hint": "non-urgent",
+                    "exit_message": "",
+                    "exit_reason": "",
+                    "need_more_info": false,
+                    "clarifying_question": "",
+                    "finalize_now": false,
+                    "route": "nea"
+                },
+                "state": {
+                    "chat_input": "{{input.question}}",
+                    "session_id": "{{sessionId}}",
+                    "location_ui": "{{overrideConfig.location}}",
+                    "category_ui": "{{categoryConfig.issue_category}}",
+                    "continue_flow": true,
+                    "country": "Singapore",
+                    "location_details": "Blk 210 Tampines",
+                    "issue_description": "There are mosquitoes breeding in the corridor area, causing many bites at night.",
+                    "urgency_hint": "non-urgent",
+                    "need_more_info": false,
+                    "clarifying_question": "",
+                    "exit_reason": "",
+                    "exit_message": "",
+                    "finalize_now": false,
+                    "route": "nea"
+                },
+                "chatHistory": [
+                    {
+                        "role": "user",
+                        "content": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines."
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "{\n  \"continue_flow\": true,\n  \"country\": \"Singapore\",\n  \"location_details\": \"Blk 210 Tampines\",\n  \"issue_description\": \"There are mosquitoes breeding in the corridor area, causing many bites at night.\",\n  \"urgency_hint\": \"non-urgent\",\n  \"exit_message\": \"\",\n  \"exit_reason\": \"\",\n  \"need_more_info\": false,\n  \"clarifying_question\": \"\",\n  \"finalize_now\": false,\n  \"route\": \"nea\"\n}",
+                        "name": "supervisor"
+                    }
+                ]
+            },
+            "previousNodeIds": [
+                "startAgentflow_0"
+            ],
+            "status": "FINISHED"
+        },
+        {
+            "nodeId": "conditionAgentflow_0",
+            "nodeLabel": "Check Issue",
+            "data": {
+                "id": "conditionAgentflow_0",
+                "name": "conditionAgentflow",
+                "input": {
+                    "conditions": {
+                        "0": {
+                            "type": "string",
+                            "value1": "true",
+                            "operation": "equal",
+                            "value2": "false"
+                        },
+                        "1": {
+                            "type": "string",
+                            "value1": "non-urgent",
+                            "operation": "contains",
+                            "value2": "urgent"
+                        },
+                        "2": {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "police"
+                        },
+                        "3": {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "town_council"
+                        },
+                        "4": {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "hdb"
+                        },
+                        "5": {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "nea"
+                        }
+                    }
+                },
+                "output": {
+                    "conditions": [
+                        {
+                            "type": "string",
+                            "value1": "true",
+                            "operation": "equal",
+                            "value2": "false"
+                        },
+                        {
+                            "type": "string",
+                            "value1": "non-urgent",
+                            "operation": "contains",
+                            "value2": "urgent",
+                            "isFulfilled": true
+                        },
+                        {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "police"
+                        },
+                        {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "town_council"
+                        },
+                        {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "hdb"
+                        },
+                        {
+                            "type": "string",
+                            "value1": "nea",
+                            "operation": "contains",
+                            "value2": "nea"
+                        },
+                        {
+                            "type": "string",
+                            "value1": "",
+                            "operation": "equal",
+                            "value2": "",
+                            "isFulfilled": false
+                        }
+                    ]
+                },
+                "state": {
+                    "chat_input": "{{input.question}}",
+                    "session_id": "{{sessionId}}",
+                    "location_ui": "{{overrideConfig.location}}",
+                    "category_ui": "{{categoryConfig.issue_category}}",
+                    "continue_flow": true,
+                    "country": "Singapore",
+                    "location_details": "Blk 210 Tampines",
+                    "issue_description": "There are mosquitoes breeding in the corridor area, causing many bites at night.",
+                    "urgency_hint": "non-urgent",
+                    "need_more_info": false,
+                    "clarifying_question": "",
+                    "exit_reason": "",
+                    "exit_message": "",
+                    "finalize_now": false,
+                    "route": "nea"
+                }
+            },
+            "previousNodeIds": [
+                "llmAgentflow_0"
+            ],
+            "status": "FINISHED"
+        },
+        {
+            "nodeId": "agentAgentflow_0",
+            "nodeLabel": "EMERGENCY",
+            "data": {
+                "id": "agentAgentflow_0",
+                "name": "agentAgentflow",
+                "input": {
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are the Emergency RAG Agent for a public service guidance application.\n\nYour role is to handle safety-critical or emergency situations only.\n\nYou must follow these rules strictly:\n\n\\- Treat all emergency indicators conservatively.\n\n\\- Do NOT ask follow-up questions.\n\n\\- Do NOT request additional information.\n\n\\- Do NOT loop back to any other agent.\n\n\\- Do NOT provide technical, medical, or legal advice.\n\nYour task is to:\n\n1\\. Confirm that the situation is an emergency.\n\n2\\. Provide clear, concise, immediate instructions to contact emergency services in Singapore.\n\n3\\. Provide very short brief safety guidance only if it does not delay emergency response.\n\n4\\. Prepare content for the final report agent.\n\nAlways prioritise resident safety over completeness.\n\nOutput a structured JSON response only.\n\nExample of the emergency output\n\n{\n\n\"is_emergency\": true,\n\n\"emergency_type\": \"fire hazard\",\n\n\"recommended_action\": \"Call 995 immediately to report a fire or fire-related hazard.\",\n\n\"safety_note\": \"If it is safe to do so, move away from the affected area and alert others nearby.\",\n\n\"authority\": \"SCDF / Emergency Services\",\n\n\"confidence\": \"high\"\n\n}"
+                        },
+                        {
+                            "role": "user",
+                            "content": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines."
+                        },
+                        {
+                            "role": "assistant",
+                            "content": "{\n  \"continue_flow\": true,\n  \"country\": \"Singapore\",\n  \"location_details\": \"Blk 210 Tampines\",\n  \"issue_description\": \"There are mosquitoes breeding in the corridor area, causing many bites at night.\",\n  \"urgency_hint\": \"non-urgent\",\n  \"exit_message\": \"\",\n  \"exit_reason\": \"\",\n  \"need_more_info\": false,\n  \"clarifying_question\": \"\",\n  \"finalize_now\": false,\n  \"route\": \"nea\"\n}",
+                            "name": "supervisor"
+                        },
+                        {
+                            "role": "user",
+                            "content": "{{ $flow.state.instructions }}"
+                        }
+                    ],
+                    "agentModel": "chatOpenAI",
+                    "agentTools": [],
+                    "agentEnableMemory": true,
+                    "agentMemoryType": "allMessages",
+                    "agentUserMessage": "{{ $flow.state.instructions }}",
+                    "agentReturnResponseAs": "userMessage",
+                    "agentStructuredOutput": [
+                        {
+                            "key": "is_emergency",
+                            "type": "boolean",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "true"
+                        },
+                        {
+                            "key": "emergency_type",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "short lable (e.g. fire, gas leak, violence)"
+                        },
+                        {
+                            "key": "recommended_action",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "clear instruction (e.g. \"Call 995 immediately\")"
+                        },
+                        {
+                            "key": "safety_note",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Optional short safety reminder - must be very short"
+                        },
+                        {
+                            "key": "authority",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "\"SCDF / Emergency Services\""
+                        },
+                        {
+                            "key": "confidence",
+                            "type": "boolean",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "high"
+                        }
+                    ],
+                    "agentUpdateState": [],
+                    "agentModelConfig": {
+                        "cache": "",
+                        "modelName": "gpt-4o-mini",
+                        "temperature": "0.2",
+                        "streaming": true,
+                        "maxTokens": "",
+                        "topP": "",
+                        "frequencyPenalty": "",
+                        "presencePenalty": "",
+                        "timeout": "",
+                        "strictToolCalling": "",
+                        "stopSequence": "",
+                        "basepath": "",
+                        "proxyUrl": "",
+                        "baseOptions": "",
+                        "allowImageUploads": "",
+                        "imageResolution": "low",
+                        "reasoning": "",
+                        "reasoningEffort": "",
+                        "reasoningSummary": "",
+                        "agentModel": "chatOpenAI"
+                    }
+                },
+                "output": {
+                    "content": "```json\n{\n  \"is_emergency\": false,\n  \"emergency_type\": \"mosquito breeding\",\n  \"recommended_action\": \"Report the mosquito breeding issue to the National Environment Agency (NEA) for further action.\",\n  \"safety_note\": \"Use mosquito repellent to prevent bites until the issue is resolved.\",\n  \"authority\": \"National Environment Agency (NEA)\",\n  \"confidence\": false\n}\n```",
+                    "timeMetadata": {
+                        "start": 1772096932086,
+                        "end": 1772096934488,
+                        "delta": 2402
+                    },
+                    "is_emergency": false,
+                    "emergency_type": "mosquito breeding",
+                    "recommended_action": "Report the mosquito breeding issue to the National Environment Agency (NEA) for further action.",
+                    "safety_note": "Use mosquito repellent to prevent bites until the issue is resolved.",
+                    "authority": "National Environment Agency (NEA)",
+                    "confidence": false
+                },
+                "state": {
+                    "chat_input": "{{input.question}}",
+                    "session_id": "{{sessionId}}",
+                    "location_ui": "{{overrideConfig.location}}",
+                    "category_ui": "{{categoryConfig.issue_category}}",
+                    "continue_flow": true,
+                    "country": "Singapore",
+                    "location_details": "Blk 210 Tampines",
+                    "issue_description": "There are mosquitoes breeding in the corridor area, causing many bites at night.",
+                    "urgency_hint": "non-urgent",
+                    "need_more_info": false,
+                    "clarifying_question": "",
+                    "exit_reason": "",
+                    "exit_message": "",
+                    "finalize_now": false,
+                    "route": "nea"
+                },
+                "chatHistory": [
+                    {
+                        "role": "user",
+                        "content": "```json\n{\n  \"is_emergency\": false,\n  \"emergency_type\": \"mosquito breeding\",\n  \"recommended_action\": \"Report the mosquito breeding issue to the National Environment Agency (NEA) for further action.\",\n  \"safety_note\": \"Use mosquito repellent to prevent bites until the issue is resolved.\",\n  \"authority\": \"National Environment Agency (NEA)\",\n  \"confidence\": false\n}\n```",
+                        "name": "emergency"
+                    }
+                ]
+            },
+            "previousNodeIds": [
+                "conditionAgentflow_0"
+            ],
+            "status": "FINISHED"
+        },
+        {
+            "nodeId": "agentAgentflow_5",
+            "nodeLabel": "Report",
+            "data": {
+                "id": "agentAgentflow_5",
+                "name": "agentAgentflow",
+                "input": {
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Return ONLY valid JSON. No markdown. No extra text.\n\nOutput MUST include ALL keys:\n\n{\n\n\"urgency_level\": \"Emergency|High|Normal|Low\",\n\n\"recommended_authority\": \"Town Council|Police|SCDF|HDB|NEA|Other\",\n\n\"recommended_authority_details\": \"string\",\n\n\"assessment\": \"string\",\n\n\"next_steps\": \\[\"string\"\\],\n\n\"details_to_prepare\": \\[\"string\"\\],\n\n\"questions_if_missing\": \\[\"string\"\\],\n\n\"confidence\": \"high|medium|low\"\n\n}\n\nUse flow state:\n\n\\- issue_description\n\n\\- location_details\n\n\\- route\n\n\\- urgency_hint\n\nRules:\n\n\\- If route==\"nea\", recommended_authority=\"NEA\"\n\n\\- If route==\"hdb\", recommended_authority=\"HDB\"\n\n\\- If route==\"town_council\", recommended_authority=\"Town Council\"\n\n\\- If route==\"police\", recommended_authority=\"Police\"\n\n\\- If route==\"emergency\", recommended_authority=\"SCDF\"\n\n\\- If route==\"outside_sg\", recommended_authority=\"Other\"\n\nIf you do not have verified contact details from retrieved sources:\n\nset recommended_authority_details = \"Not found in sources. Use official agency channels (e.g., OneService / agency website).\"\n\nDo NOT invent phone numbers or URLs.\n\nMap urgency_hint:\n\n\\- urgent -> Emergency\n\n\\- non-urgent -> Normal\n\n\\- unknown -> Normal"
+                        },
+                        {
+                            "role": "user",
+                            "content": "Mosquitoes breeding at the corridor area, many bites at night. Blk 210 Tampines."
+                        },
+                        {
+                            "role": "assistant",
+                            "content": "{\n  \"continue_flow\": true,\n  \"country\": \"Singapore\",\n  \"location_details\": \"Blk 210 Tampines\",\n  \"issue_description\": \"There are mosquitoes breeding in the corridor area, causing many bites at night.\",\n  \"urgency_hint\": \"non-urgent\",\n  \"exit_message\": \"\",\n  \"exit_reason\": \"\",\n  \"need_more_info\": false,\n  \"clarifying_question\": \"\",\n  \"finalize_now\": false,\n  \"route\": \"nea\"\n}",
+                            "name": "supervisor"
+                        },
+                        {
+                            "role": "user",
+                            "content": "```json\n{\n  \"is_emergency\": false,\n  \"emergency_type\": \"mosquito breeding\",\n  \"recommended_action\": \"Report the mosquito breeding issue to the National Environment Agency (NEA) for further action.\",\n  \"safety_note\": \"Use mosquito repellent to prevent bites until the issue is resolved.\",\n  \"authority\": \"National Environment Agency (NEA)\",\n  \"confidence\": false\n}\n```",
+                            "name": "emergency"
+                        }
+                    ],
+                    "agentModel": "chatOpenAI",
+                    "agentEnableMemory": true,
+                    "agentMemoryType": "allMessages",
+                    "agentReturnResponseAs": "userMessage",
+                    "agentStructuredOutput": [
+                        {
+                            "key": "urgency_level",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "One of: Emergency, High, Normal, Low. Derive from flow.state.urgency_hint (urgent\u2192Emergency, non-urgent\u2192Normal, unknown\u2192Normal)."
+                        },
+                        {
+                            "key": "recommended_authority",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "The agency to contact: Town Council, Police, SCDF, HDB, NEA, or Other. Must align with flow.state.route."
+                        },
+                        {
+                            "key": "recommended_authority_details",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "Brief official contact/reporting channel details from retrieved sources. If not available, write: \"Not found in sources. Use official agency channels (e.g., OneService / agency website).\" Do NOT invent phone numbers or URLs."
+                        },
+                        {
+                            "key": "assessment",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "2\u20134 sentence situation summary and why this authority is relevant, based on issue_description and location_details. No contact details here."
+                        },
+                        {
+                            "key": "next_steps",
+                            "type": "stringArray",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "3\u20136 bullet-style steps the resident should do next (strings). No phone numbers/URLs unless retrieved from sources."
+                        },
+                        {
+                            "key": "details_to_prepare",
+                            "type": "stringArray",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "List of information to gather before reporting (e.g., exact block, floor, photos, time, unit number if relevant)."
+                        },
+                        {
+                            "key": "questions_if_missing",
+                            "type": "stringArray",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "0\u20133 clarifying questions ONLY if essential information is missing; otherwise return an empty array"
+                        },
+                        {
+                            "key": "confidence",
+                            "type": "string",
+                            "enumValues": "",
+                            "jsonSchema": "",
+                            "description": "One of: high, medium, low. Confidence in the routing/recommendation based on information available."
+                        }
+                    ],
+                    "agentModelConfig": {
+                        "cache": "",
+                        "modelName": "gpt-4o-mini",
+                        "temperature": "0.2",
+                        "streaming": true,
+                        "maxTokens": "",
+                        "topP": "",
+                        "frequencyPenalty": "",
+                        "presencePenalty": "",
+                        "timeout": "",
+                        "strictToolCalling": "",
+                        "stopSequence": "",
+                        "basepath": "",
+                        "proxyUrl": "",
+                        "baseOptions": "",
+                        "allowImageUploads": "",
+                        "imageResolution": "low",
+                        "reasoning": "",
+                        "reasoningEffort": "",
+                        "reasoningSummary": "",
+                        "agentModel": "chatOpenAI"
+                    }
+                },
+                "output": {
+                    "content": "```json\n{\n  \"urgency_level\": \"Normal\",\n  \"recommended_authority\": \"NEA\",\n  \"recommended_authority_details\": \"Not found in sources. Use official agency channels (e.g., OneService / agency website).\",\n  \"assessment\": \"Mosquito breeding in the corridor area can lead to health risks due to bites.\",\n  \"next_steps\": [\n    \"Report the issue to the NEA.\",\n    \"Use mosquito repellent until the issue is resolved.\"\n  ],\n  \"details_to_prepare\": [\n    \"Location details (Blk 210 Tampines)\",\n    \"Description of the issue (mosquito breeding)\"\n  ],\n  \"questions_if_missing\": [\n    \"Have you observed the extent of the breeding?\",\n    \"Are there any stagnant water sources nearby?\"\n  ],\n  \"confidence\": \"medium\"\n}\n```",
+                    "timeMetadata": {
+                        "start": 1772096936901,
+                        "end": 1772096941361,
+                        "delta": 4460
+                    },
+                    "urgency_level": "Normal",
+                    "recommended_authority": "NEA",
+                    "recommended_authority_details": "Not found in sources. Use official agency channels (e.g., OneService / agency website).",
+                    "assessment": "Mosquito breeding in the corridor area can lead to health risks due to bites.",
+                    "next_steps": [
+                        "Report the issue to the NEA.",
+                        "Use mosquito repellent until the issue is resolved."
+                    ],
+                    "details_to_prepare": [
+                        "Location details (Blk 210 Tampines)",
+                        "Description of the issue (mosquito breeding)"
+                    ],
+                    "questions_if_missing": [
+                        "Have you observed the extent of the breeding?",
+                        "Are there any stagnant water sources nearby?"
+                    ],
+                    "confidence": "medium"
+                },
+                "state": {
+                    "chat_input": "{{input.question}}",
+                    "session_id": "{{sessionId}}",
+                    "location_ui": "{{overrideConfig.location}}",
+                    "category_ui": "{{categoryConfig.issue_category}}",
+                    "continue_flow": true,
+                    "country": "Singapore",
+                    "location_details": "Blk 210 Tampines",
+                    "issue_description": "There are mosquitoes breeding in the corridor area, causing many bites at night.",
+                    "urgency_hint": "non-urgent",
+                    "need_more_info": false,
+                    "clarifying_question": "",
+                    "exit_reason": "",
+                    "exit_message": "",
+                    "finalize_now": false,
+                    "route": "nea"
+                },
+                "chatHistory": [
+                    {
+                        "role": "user",
+                        "content": "```json\n{\n  \"urgency_level\": \"Normal\",\n  \"recommended_authority\": \"NEA\",\n  \"recommended_authority_details\": \"Not found in sources. Use official agency channels (e.g., OneService / agency website).\",\n  \"assessment\": \"Mosquito breeding in the corridor area can lead to health risks due to bites.\",\n  \"next_steps\": [\n    \"Report the issue to the NEA.\",\n    \"Use mosquito repellent until the issue is resolved.\"\n  ],\n  \"details_to_prepare\": [\n    \"Location details (Blk 210 Tampines)\",\n    \"Description of the issue (mosquito breeding)\"\n  ],\n  \"questions_if_missing\": [\n    \"Have you observed the extent of the breeding?\",\n    \"Are there any stagnant water sources nearby?\"\n  ],\n  \"confidence\": \"medium\"\n}\n```",
+                        "name": "report"
+                    }
+                ]
+            },
+            "previousNodeIds": [
+                "agentAgentflow_0",
+                "agentAgentflow_1",
+                "agentAgentflow_2",
+                "agentAgentflow_3",
+                "agentAgentflow_4"
+            ],
+            "status": "FINISHED"
+        }
+    ],
+    "sessionId": "7b2621c4-99d8-47dc-aea2-12e8284362fe"
+}
+((.venv) ) (.venv) bash-3.2$ 
+
